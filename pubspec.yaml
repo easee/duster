@@ -1,0 +1,15 @@
+name: duster
+description: "Dart code linter rules"
+version: 1.0.1
+homepage:
+publish_to: none
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  custom_lint_builder: ^0.8.0
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
+
