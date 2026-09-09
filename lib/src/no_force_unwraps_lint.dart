@@ -1,38 +1,47 @@
+import 'package:analyzer/analysis_rule/analysis_rule.dart';
+import 'package:analyzer/analysis_rule/rule_context.dart';
+import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
+import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import 'package:analyzer/error/listener.dart';
-import 'package:custom_lint_builder/custom_lint_builder.dart';
-import 'package:custom_lint_core/custom_lint_core.dart' as clc;
 
-class NoForceUnwraps extends DartLintRule
+class NoForceUnwraps extends AnalysisRule
 {
-	const NoForceUnwraps() : super(code: _code);
-
-	static const _code = clc.LintCode(
-		name: "no_force_unwraps",
-		problemMessage: "💥 Crash ops are not allowed. Unwrap the value or provide a fallback.",
-		errorSeverity: ErrorSeverity.ERROR,
-		correctionMessage: "Replace ! usage with nullsafe code",
+	static const LintCode code = LintCode(
+		'no_force_unwraps',
+		'💥 Crash ops are not allowed. Unwrap the value or provide a fallback.',
+		correctionMessage: 'Replace ! usage with nullsafe code',
+		severity: DiagnosticSeverity.ERROR,
 	);
 
+	NoForceUnwraps()
+		: super(
+			name: 'no_force_unwraps',
+			description: 'Disallows the null-check (!) operator.',
+		);
+
 	@override
-	void run(CustomLintResolver resolver, ErrorReporter reporter, CustomLintContext context)
+	LintCode get diagnosticCode => code;
+
+	@override
+	void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context)
 	{
-		// context.registry.addExpression((node)
-		// {
-		// 	final token = node.endToken;
-		// 	if (token.type == TokenType.BANG)
-		// 	{
-		// 		reporter.atToken(token,code);
-		// 	}
-		// });
-		context.registry.addPostfixExpression((node)
-		{
-			if (node.operator.type == TokenType.BANG)
-			{
-				reporter.atToken(node.operator, code);
-			}
-		});
+		final visitor = _Visitor(this);
+		registry.addPostfixExpression(this, visitor);
 	}
 }
 
+class _Visitor extends SimpleAstVisitor<void>
+{
+	final AnalysisRule rule;
+
+	_Visitor(this.rule);
+
+	@override
+	void visitPostfixExpression(PostfixExpression node)
+	{
+		if (node.operator.type == TokenType.BANG)
+			rule.reportAtToken(node.operator);
+	}
+}

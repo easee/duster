@@ -1,127 +1,158 @@
+import 'package:analyzer/analysis_rule/analysis_rule.dart';
+import 'package:analyzer/analysis_rule/rule_context.dart';
+import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
+import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/token.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
-import 'package:analyzer/error/listener.dart';
-import 'package:custom_lint_builder/custom_lint_builder.dart';
-import 'package:custom_lint_core/custom_lint_core.dart' as clc;
 
-class CurlyNewLine extends DartLintRule
+/// NOTE: this rule was disabled/commented-out prior to migration and has not
+/// been re-tested against the new analysis_server_plugin API. Verify its
+/// behavior before enabling it in analysis_options.yaml.
+class CurlyNewLine extends AnalysisRule
 {
-	CurlyNewLine() : super(code: codeFor("statement"));
-
-	static clc.LintCode codeFor(String description) => clc.LintCode(
-		name: "curly_brace_new_line",
-		problemMessage: "↩️  Curly braces must go on new line in $description",
-		errorSeverity: ErrorSeverity.ERROR
+	/// Uses `{0}` interpolation instead of building a distinct LintCode per
+	/// call, since diagnosticCode is required to be a single static instance.
+	static const LintCode code = LintCode(
+		'curly_brace_new_line',
+		'↩️  Curly braces must go on new line in {0}',
+		severity: DiagnosticSeverity.ERROR,
 	);
 
+	CurlyNewLine()
+		: super(
+			name: 'curly_brace_new_line',
+			description: 'Requires opening curly braces to start on a new line.',
+		);
+
 	@override
-	void run(CustomLintResolver resolver, ErrorReporter reporter, CustomLintContext context)
+	LintCode get diagnosticCode => code;
+
+	@override
+	void registerNodeProcessors(RuleVisitorRegistry registry, RuleContext context)
 	{
-		context.registry.addMethodDeclaration((node)
-		{
-			final element = node.declaredFragment;
-			if (element == null)
-				return;
-			final body = node.body;
-			Token openToken = body.beginToken;
-			if (body.isAsynchronous)
-			{
-				final nextToken = openToken.next;
-				if (nextToken != null)
-					openToken = nextToken;
-			}
-			final closeToken = node.body.endToken;
-			final lineCurlyOpen = resolver.lineInfo.getLocation(openToken.offset).lineNumber;
-			final lineCurlyClose = resolver.lineInfo.getLocation(closeToken.offset).lineNumber;
-			final lineDeclared = resolver.lineInfo.getLocation(element.offset).lineNumber;
-			if (openToken.type == TokenType.OPEN_CURLY_BRACKET && lineDeclared == lineCurlyOpen && lineCurlyOpen != lineCurlyClose)
-				reporter.atToken(openToken,codeFor("method definition"));
-		});
-
-		context.registry.addClassDeclaration((node)
-		{
-			final element = node.declaredFragment;
-			if (element == null)
-				return;
-			final token = node.leftBracket;
-			final lineDeclared = resolver.lineInfo.getLocation(element.offset).lineNumber;
-			final lineCurly = resolver.lineInfo.getLocation(token.offset).lineNumber;
-			if (lineDeclared == lineCurly)
-				reporter.atToken(token,codeFor("class definition"));
-		});
-
-		context.registry.addExtensionDeclaration((node)
-		{
-			final element = node.declaredFragment;
-			if (element == null)
-				return;
-			final token = node.leftBracket;
-			final lineDeclared = resolver.lineInfo.getLocation(element.offset).lineNumber;
-			final lineCurly = resolver.lineInfo.getLocation(token.offset).lineNumber;
-			if (lineDeclared == lineCurly)
-				reporter.atToken(token,codeFor("extension definition"));
-		});
-
-		context.registry.addEnumDeclaration((node)
-		{
-			final element = node.declaredFragment;
-			if (element == null)
-				return;
-			final token = node.leftBracket;
-			final lineDeclared = resolver.lineInfo.getLocation(element.offset).lineNumber;
-			final lineCurly = resolver.lineInfo.getLocation(token.offset).lineNumber;
-			if (lineDeclared == lineCurly)
-				reporter.atToken(token,codeFor("enum definition"));
-		});
-
-		context.registry.addIfStatement((node)
-		{
-			final ifToken = node.ifKeyword;
-			final openToken = node.thenStatement.beginToken;
-			final closeToken = node.thenStatement.endToken;
-			final lineDeclared = resolver.lineInfo.getLocation(ifToken.offset).lineNumber;
-			final lineCurlyOpen = resolver.lineInfo.getLocation(openToken.offset).lineNumber;
-			final lineCurlyClose = resolver.lineInfo.getLocation(closeToken.offset).lineNumber;
-			if (openToken.type == TokenType.OPEN_CURLY_BRACKET && lineDeclared == lineCurlyOpen && lineCurlyOpen != lineCurlyClose)
-				reporter.atToken(openToken,codeFor("if statement"));
-
-			final elseToken = node.elseKeyword;
-			final elseStatement = node.elseStatement;
-			if (elseToken != null && elseStatement != null)
-			{
-				final openToken = elseStatement.beginToken;
-				final closeToken = elseStatement.endToken;
-				final lineDeclared = resolver.lineInfo.getLocation(elseToken.offset).lineNumber;
-				final lineCurlyOpen = resolver.lineInfo.getLocation(openToken.offset).lineNumber;
-				final lineCurlyClose = resolver.lineInfo.getLocation(closeToken.offset).lineNumber;
-				if (openToken.type == TokenType.OPEN_CURLY_BRACKET && lineDeclared == lineCurlyOpen && lineCurlyOpen != lineCurlyClose)
-					reporter.atToken(openToken,codeFor("else statement"));
-				}
-		});
-
-		context.registry.addSwitchStatement((node)
-		{
-			final switchToken = node.switchKeyword;
-			final token = node.leftBracket;
-			final lineDeclared = resolver.lineInfo.getLocation(switchToken.offset).lineNumber;
-			final lineCurly = resolver.lineInfo.getLocation(token.offset).lineNumber;
-			if (lineDeclared == lineCurly)
-				reporter.atToken(token,codeFor("switch statement"));
-		});
-
-		context.registry.addForStatement((node)
-		{
-			final forToken = node.forKeyword;
-			final openToken = node.body.beginToken;
-			final closeToken = node.body.endToken;
-			final lineDeclared = resolver.lineInfo.getLocation(forToken.offset).lineNumber;
-			final lineCurlyOpen = resolver.lineInfo.getLocation(openToken.offset).lineNumber;
-			final lineCurlyClose = resolver.lineInfo.getLocation(closeToken.offset).lineNumber;
-			if (openToken.type == TokenType.OPEN_CURLY_BRACKET && lineDeclared == lineCurlyOpen && lineCurlyOpen != lineCurlyClose)
-				reporter.atToken(openToken,codeFor("for loop statement"));
-		});
+		final visitor = _Visitor(this, context);
+		registry.addMethodDeclaration(this, visitor);
+		registry.addClassDeclaration(this, visitor);
+		registry.addExtensionDeclaration(this, visitor);
+		registry.addEnumDeclaration(this, visitor);
+		registry.addIfStatement(this, visitor);
+		registry.addSwitchStatement(this, visitor);
+		registry.addForStatement(this, visitor);
 	}
-	@override
-	List<Fix> getFixes() => [];
 }
 
+class _Visitor extends SimpleAstVisitor<void>
+{
+	final AnalysisRule rule;
+	final RuleContext context;
+
+	_Visitor(this.rule, this.context);
+
+	int _lineOf(int offset) => context.currentUnit!.unit.lineInfo.getLocation(offset).lineNumber;
+
+	@override
+	void visitMethodDeclaration(MethodDeclaration node)
+	{
+		final element = node.declaredFragment;
+		if (element == null)
+			return;
+		var openToken = node.body.beginToken;
+		if (node.body.isAsynchronous)
+		{
+			final nextToken = openToken.next;
+			if (nextToken != null)
+				openToken = nextToken;
+		}
+		final closeToken = node.body.endToken;
+		final lineCurlyOpen = _lineOf(openToken.offset);
+		final lineCurlyClose = _lineOf(closeToken.offset);
+		final lineDeclared = _lineOf(element.offset);
+		if (openToken.type == TokenType.OPEN_CURLY_BRACKET && lineDeclared == lineCurlyOpen && lineCurlyOpen != lineCurlyClose)
+			rule.reportAtToken(openToken, arguments: ['method definition']);
+	}
+
+	@override
+	void visitClassDeclaration(ClassDeclaration node)
+	{
+		final element = node.declaredFragment;
+		final body = node.body;
+		if (element == null || body is! BlockClassBody)
+			return;
+		final token = body.leftBracket;
+		if (_lineOf(element.offset) == _lineOf(token.offset))
+			rule.reportAtToken(token, arguments: ['class definition']);
+	}
+
+	@override
+	void visitExtensionDeclaration(ExtensionDeclaration node)
+	{
+		final element = node.declaredFragment;
+		final body = node.body;
+		if (element == null || body is! BlockClassBody)
+			return;
+		final token = body.leftBracket;
+		if (_lineOf(element.offset) == _lineOf(token.offset))
+			rule.reportAtToken(token, arguments: ['extension definition']);
+	}
+
+	@override
+	void visitEnumDeclaration(EnumDeclaration node)
+	{
+		final element = node.declaredFragment;
+		final body = node.body;
+		if (element == null || body is! BlockEnumBody)
+			return;
+		final token = body.leftBracket;
+		if (_lineOf(element.offset) == _lineOf(token.offset))
+			rule.reportAtToken(token, arguments: ['enum definition']);
+	}
+
+	@override
+	void visitIfStatement(IfStatement node)
+	{
+		final ifToken = node.ifKeyword;
+		final openToken = node.thenStatement.beginToken;
+		final closeToken = node.thenStatement.endToken;
+		final lineDeclared = _lineOf(ifToken.offset);
+		final lineCurlyOpen = _lineOf(openToken.offset);
+		final lineCurlyClose = _lineOf(closeToken.offset);
+		if (openToken.type == TokenType.OPEN_CURLY_BRACKET && lineDeclared == lineCurlyOpen && lineCurlyOpen != lineCurlyClose)
+			rule.reportAtToken(openToken, arguments: ['if statement']);
+
+		final elseToken = node.elseKeyword;
+		final elseStatement = node.elseStatement;
+		if (elseToken != null && elseStatement != null)
+		{
+			final openToken = elseStatement.beginToken;
+			final closeToken = elseStatement.endToken;
+			final lineDeclared = _lineOf(elseToken.offset);
+			final lineCurlyOpen = _lineOf(openToken.offset);
+			final lineCurlyClose = _lineOf(closeToken.offset);
+			if (openToken.type == TokenType.OPEN_CURLY_BRACKET && lineDeclared == lineCurlyOpen && lineCurlyOpen != lineCurlyClose)
+				rule.reportAtToken(openToken, arguments: ['else statement']);
+		}
+	}
+
+	@override
+	void visitSwitchStatement(SwitchStatement node)
+	{
+		final switchToken = node.switchKeyword;
+		final token = node.leftBracket;
+		if (_lineOf(switchToken.offset) == _lineOf(token.offset))
+			rule.reportAtToken(token, arguments: ['switch statement']);
+	}
+
+	@override
+	void visitForStatement(ForStatement node)
+	{
+		final forToken = node.forKeyword;
+		final openToken = node.body.beginToken;
+		final closeToken = node.body.endToken;
+		final lineDeclared = _lineOf(forToken.offset);
+		final lineCurlyOpen = _lineOf(openToken.offset);
+		final lineCurlyClose = _lineOf(closeToken.offset);
+		if (openToken.type == TokenType.OPEN_CURLY_BRACKET && lineDeclared == lineCurlyOpen && lineCurlyOpen != lineCurlyClose)
+			rule.reportAtToken(openToken, arguments: ['for loop statement']);
+	}
+}
