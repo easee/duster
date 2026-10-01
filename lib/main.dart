@@ -25,6 +25,9 @@ class EaseeLints extends Plugin
 		//     duster:
 		//       diagnostics:
 		//         no_force_unwraps: true
+		//         no_unsafe_first: true
+		//         curly_brace_new_line: true
+		//         tabs_no_spaces: true
 		//
 		// (Mirrors the old custom_lint config: `custom_lint: rules: - no_force_unwraps: true`.)
 		registry.registerLintRule(NoForceUnwraps());

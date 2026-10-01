@@ -19,7 +19,7 @@ class CurlyNewLine extends AnalysisRule
 	CurlyNewLine()
 		: super(
 			name: 'curly_brace_new_line',
-			description: 'Requires opening curly braces to start on a new line.',
+			description: 'Requires multiline bodies to put opening curly braces on a new line.',
 		);
 
 	@override
@@ -76,9 +76,13 @@ class _Visitor extends SimpleAstVisitor<void>
 		final body = node.body;
 		if (element == null || body is! BlockClassBody)
 			return;
-		final token = body.leftBracket;
-		if (_lineOf(element.offset) == _lineOf(token.offset))
-			rule.reportAtToken(token, arguments: ['class definition']);
+		final openToken = body.leftBracket;
+		final closeToken = body.rightBracket;
+		final lineDeclared = _lineOf(element.offset);
+		final lineCurlyOpen = _lineOf(openToken.offset);
+		final lineCurlyClose = _lineOf(closeToken.offset);
+		if (lineDeclared == lineCurlyOpen && lineCurlyOpen != lineCurlyClose)
+			rule.reportAtToken(openToken, arguments: ['class definition']);
 	}
 
 	@override
@@ -88,9 +92,13 @@ class _Visitor extends SimpleAstVisitor<void>
 		final body = node.body;
 		if (element == null || body is! BlockClassBody)
 			return;
-		final token = body.leftBracket;
-		if (_lineOf(element.offset) == _lineOf(token.offset))
-			rule.reportAtToken(token, arguments: ['extension definition']);
+		final openToken = body.leftBracket;
+		final closeToken = body.rightBracket;
+		final lineDeclared = _lineOf(element.offset);
+		final lineCurlyOpen = _lineOf(openToken.offset);
+		final lineCurlyClose = _lineOf(closeToken.offset);
+		if (lineDeclared == lineCurlyOpen && lineCurlyOpen != lineCurlyClose)
+			rule.reportAtToken(openToken, arguments: ['extension definition']);
 	}
 
 	@override
@@ -100,9 +108,13 @@ class _Visitor extends SimpleAstVisitor<void>
 		final body = node.body;
 		if (element == null || body is! BlockEnumBody)
 			return;
-		final token = body.leftBracket;
-		if (_lineOf(element.offset) == _lineOf(token.offset))
-			rule.reportAtToken(token, arguments: ['enum definition']);
+		final openToken = body.leftBracket;
+		final closeToken = body.rightBracket;
+		final lineDeclared = _lineOf(element.offset);
+		final lineCurlyOpen = _lineOf(openToken.offset);
+		final lineCurlyClose = _lineOf(closeToken.offset);
+		if (lineDeclared == lineCurlyOpen && lineCurlyOpen != lineCurlyClose)
+			rule.reportAtToken(openToken, arguments: ['enum definition']);
 	}
 
 	@override
@@ -135,9 +147,13 @@ class _Visitor extends SimpleAstVisitor<void>
 	void visitSwitchStatement(SwitchStatement node)
 	{
 		final switchToken = node.switchKeyword;
-		final token = node.leftBracket;
-		if (_lineOf(switchToken.offset) == _lineOf(token.offset))
-			rule.reportAtToken(token, arguments: ['switch statement']);
+		final openToken = node.leftBracket;
+		final closeToken = node.rightBracket;
+		final lineDeclared = _lineOf(switchToken.offset);
+		final lineCurlyOpen = _lineOf(openToken.offset);
+		final lineCurlyClose = _lineOf(closeToken.offset);
+		if (lineDeclared == lineCurlyOpen && lineCurlyOpen != lineCurlyClose)
+			rule.reportAtToken(openToken, arguments: ['switch statement']);
 	}
 
 	@override
