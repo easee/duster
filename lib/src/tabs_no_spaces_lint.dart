@@ -5,9 +5,6 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-/// NOTE: this rule was disabled/commented-out prior to migration and has not
-/// been re-tested against the new analysis_server_plugin API. Verify its
-/// behavior before enabling it in analysis_options.yaml.
 class TabsNoSpaces extends AnalysisRule
 {
 	static const LintCode code = LintCode(
@@ -50,39 +47,32 @@ class _Visitor extends SimpleAstVisitor<void>
 			return;
 		final lineInfo = unit.unit.lineInfo;
 		final content = unit.content;
-
 		final start = node.offset;
 		final startLine = lineInfo.getLocation(start).lineNumber - 1;
-
 		final end = node.endToken.offset;
 		final endLine = lineInfo.getLocation(end).lineNumber - 1;
-
-		final runes = content.substring(start, end).runes;
-		final endPos = runes.length - 1;
 
 		for (var lineIndex = startLine; lineIndex <= endLine; lineIndex++)
 		{
 			final lineOffset = lineInfo.getOffsetOfLine(lineIndex);
+			if (lineOffset < start)
+				continue;
 
 			int length = 0;
-			int currentPos = lineOffset - start;
-			bool foundToken = false;
 			bool foundSpace = false;
-
-			while (!foundToken)
+			var offset = lineOffset;
+			while (offset < content.length)
 			{
-				if (currentPos > endPos || currentPos < 0)
-					break;
-				final int uniCode = runes.elementAt(currentPos);
-				if (uniCode == 32 || uniCode == 9)
+				final codeUnit = content.codeUnitAt(offset);
+				if (codeUnit == 32 || codeUnit == 9)
 				{
-					currentPos++;
+					offset++;
 					length++;
-					if (uniCode == 32)
+					if (codeUnit == 32)
 						foundSpace = true;
-					continue;
 				}
-				foundToken = true;
+				else
+					break;
 			}
 
 			if (length > 0 && foundSpace)

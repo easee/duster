@@ -3,8 +3,8 @@ import 'package:analysis_server_plugin/registry.dart';
 
 import 'src/no_force_unwraps_lint.dart';
 import 'src/no_unsafe_first_lint.dart';
-// import 'src/curlies_on_new_line_lint.dart';
-// import 'src/tabs_no_spaces_lint.dart';
+import 'src/curlies_on_new_line_lint.dart';
+import 'src/tabs_no_spaces_lint.dart';
 
 /// Required top-level entrypoint. The Dart Analysis Server looks for this
 /// exact variable name when it loads `lib/main.dart`.
@@ -29,7 +29,7 @@ class EaseeLints extends Plugin
 		// (Mirrors the old custom_lint config: `custom_lint: rules: - no_force_unwraps: true`.)
 		registry.registerLintRule(NoForceUnwraps());
 		registry.registerLintRule(NoUnsafeFirst());
-		// registry.registerLintRule(CurlyNewLine());
-		// registry.registerLintRule(TabsNoSpaces());
+		registry.registerLintRule(CurlyNewLine());
+		registry.registerLintRule(TabsNoSpaces());
 	}
 }

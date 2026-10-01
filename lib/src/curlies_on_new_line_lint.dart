@@ -6,9 +6,6 @@ import 'package:analyzer/dart/ast/token.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 
-/// NOTE: this rule was disabled/commented-out prior to migration and has not
-/// been re-tested against the new analysis_server_plugin API. Verify its
-/// behavior before enabling it in analysis_options.yaml.
 class CurlyNewLine extends AnalysisRule
 {
 	/// Uses `{0}` interpolation instead of building a distinct LintCode per
